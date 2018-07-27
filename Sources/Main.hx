@@ -1,10 +1,10 @@
 package;
 
 import haxe.ds.Vector;
+import kha.System;
 import kha.Color;
 import kha.Framebuffer;
 import kha.Shaders;
-import kha.System;
 import kha.graphics5.CommandList;
 import kha.graphics5.RenderTarget;
 import kha.graphics5.PipelineState;
@@ -35,10 +35,18 @@ class Main {
 			var structure = new VertexStructure();
 			structure.add("pos", VertexData.Float3);
 			
+			var vsdata = Reflect.field(Shaders, "shader_vertData0");
+			var vsbytes: haxe.io.Bytes = haxe.Unserializer.run(vsdata);
+			var vs = new kha.graphics5.VertexShader([kha.Blob.fromBytes(vsbytes)], [""]);
+
+			var fsdata = Reflect.field(Shaders, "shader_fragData0");
+			var fsbytes: haxe.io.Bytes = haxe.Unserializer.run(fsdata);
+			var fs = new kha.graphics5.FragmentShader([kha.Blob.fromBytes(fsbytes)], [""]);
+
 			pipeline = new PipelineState();
 			pipeline.inputLayout = [structure];
-			pipeline.vertexShader = Shaders.shader_vert;
-			pipeline.fragmentShader = Shaders.shader_frag;
+			pipeline.vertexShader = vs;
+			pipeline.fragmentShader = fs;
 			pipeline.compile();
 			
 			vertices = new VertexBuffer(3, structure, Usage.StaticUsage);
@@ -52,6 +60,7 @@ class Main {
 			var i = indices.lock();
 			i[0] = 0; i[1] = 1; i[2] = 2;
 			indices.unlock();
+			commandList.upload(indices);
 			
 			System.notifyOnFrames(render);
 		});
